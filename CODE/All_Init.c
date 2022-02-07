@@ -39,6 +39,7 @@ void All_Init()
     closed_loop_pi_init();////无刷电机PID参数初始化
     ccu6_pwm_init();//初始化定时器,用于输出互补PWM
     pit_interrupt_ms(CCU6_0, PIT_CH0, 5);//初始化定时器,用于计算占空比
+    mt9v03x_init();//摄像头初始化
 
 }
 
