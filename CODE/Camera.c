@@ -12,7 +12,7 @@
 
 
 //变量定义
-#define ShowFlag  0 //控制摄像头显示模式:模式0为输出原图像,模式1为输出二值化后图像,模式2为输出边缘图像
+#define ShowFlag  2 //控制摄像头显示模式:模式0为输出原图像,模式1为输出二值化后图像,模式2为输出边缘图像
 
 
 uint8 Image_Binarization[MT9V03X_H][MT9V03X_W] = {0};
@@ -84,7 +84,7 @@ uint8 my_adapt_threshold(uint8*image,uint16 col,uint16 row)
 void binarization()
 {
     uint8 i,j;
-    T_OSTU=my_adapt_threshold(mt9v03x_image[0],MT9V03X_W, MT9V03X_H);
+    T_OSTU = my_adapt_threshold(mt9v03x_image[0],MT9V03X_W, MT9V03X_H);
     for(i = 0;i < MT9V03X_H;i++)
     {
       for(j = 0;j < MT9V03X_W;j++)
@@ -113,9 +113,9 @@ void my_sobel(unsigned char imageIn[MT9V03X_H][MT9V03X_W], unsigned char imageOu
     short yEnd = MT9V03X_H - KERNEL_SIZE / 2;
     short i, j, k;
     short temp[4];
-    for (i = yStart; i < yEnd; i++)
+    for (i = yStart; i < yEnd - 1; i++)
     {
-        for (j = xStart; j < xEnd; j++)
+        for (j = xStart; j < xEnd - 1; j++)
         {
             /* 计算不同方向梯度幅值  */
             temp[0] = -(short) imageIn[i - 1][j - 1] + (short) imageIn[i - 1][j + 1]     //{{-1, 0, 1},
@@ -165,8 +165,10 @@ void CameraWorking996()
 {
     if(mt9v03x_finish_flag)
     {
+//        uint8 av[2][1];
+//        test(av);
         binarization();
-        my_sobel(mt9v03x_image[MT9V03X_H][MT9V03X_W] , Image_Soble[MT9V03X_H][MT9V03X_W] , T_OSTU);
+        my_sobel(mt9v03x_image , Image_Soble , T_OSTU);
         switch(ShowFlag)
         {
             case 0:lcd_displayimage032(mt9v03x_image[0],MT9V03X_W, MT9V03X_H);break;
@@ -179,6 +181,15 @@ void CameraWorking996()
 
 }
 
+
+void test(uint8 ab[][1])
+{
+    int i = 0;
+//    for(i = 0 ; i <= 1 ; i++)
+//    {
+//        ab[i][1] = 0;
+//    }
+}
 
 
 
