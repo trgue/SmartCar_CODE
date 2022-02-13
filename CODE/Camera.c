@@ -12,12 +12,13 @@
 
 
 //变量定义
-#define ShowFlag  2 //控制摄像头显示模式:模式0为输出原图像,模式1为输出二值化后图像,模式2为输出边缘图像
+#define ShowFlag  0 //控制摄像头显示模式:模式0为输出原图像,模式1为输出二值化后图像,模式2为输出边缘图像
 
 
 uint8 Image_Binarization[MT9V03X_H][MT9V03X_W] = {0};
 uint8 Image_Soble[MT9V03X_H][MT9V03X_W] = {0};
 uint8 T_OSTU = 0;
+uint8 SelfControl_OSTU = 0;
 
 
 
@@ -134,10 +135,10 @@ void my_sobel(unsigned char imageIn[MT9V03X_H][MT9V03X_W], unsigned char imageOu
             - (short) imageIn[i][j - 1] + (short) imageIn[i + 1][j]       // -1,  0,  1
             - (short) imageIn[i - 1][j - 1] + (short) imageIn[i + 1][j + 1];    //  0,  1,  1
 
-            temp[0] = fabs(temp[0]);
-            temp[1] = fabs(temp[1]);
-            temp[2] = fabs(temp[2]);
-            temp[3] = fabs(temp[3]);
+            temp[0] = abs(temp[0]);
+            temp[1] = abs(temp[1]);
+            temp[2] = abs(temp[2]);
+            temp[3] = abs(temp[3]);
 
             /* 找出梯度幅值最大值  */
             for (k = 1; k < 4; k++)
@@ -148,13 +149,22 @@ void my_sobel(unsigned char imageIn[MT9V03X_H][MT9V03X_W], unsigned char imageOu
                 }
             }
 
-            if (temp[0] > Threshold)
+            /* 使用像素点邻域内像素点之和的一定比例    作为阈值  */
+            temp[3] = (short) imageIn[i - 1][j - 1] + (short) imageIn[i - 1][j] + (short) imageIn[i - 1][j + 1]
+                    + (short) imageIn[i][j - 1] + (short) imageIn[i][j] + (short) imageIn[i][j + 1]
+                    + (short) imageIn[i + 1][j - 1] + (short) imageIn[i + 1][j] + (short) imageIn[i + 1][j + 1];
+
+//            if (temp[0] > Threshold)
+//            {
+//                imageOut[i][j] = BLACK;
+//            }
+            if (temp[0] > temp[3] / 12.0f)
             {
-                imageOut[i][j] = 1;
+                imageOut[i][j] = BLACK;
             }
             else
             {
-                imageOut[i][j] = 0;
+                imageOut[i][j] = WHITE;
             }
         }
     }
@@ -165,10 +175,10 @@ void CameraWorking996()
 {
     if(mt9v03x_finish_flag)
     {
-//        uint8 av[2][1];
-//        test(av);
         binarization();
-        my_sobel(mt9v03x_image , Image_Soble , T_OSTU);
+//        my_sobel(mt9v03x_image , Image_Soble , T_OSTU);
+//        my_sobel(mt9v03x_image , Image_Soble , SelfControl_OSTU);//自己调整大津法
+//        seekfree_sendimg_03x(UART_1, mt9v03x_image[0], MT9V03X_W, MT9V03X_H);//使用上位机
         switch(ShowFlag)
         {
             case 0:lcd_displayimage032(mt9v03x_image[0],MT9V03X_W, MT9V03X_H);break;
@@ -182,14 +192,6 @@ void CameraWorking996()
 }
 
 
-void test(uint8 ab[][1])
-{
-    int i = 0;
-//    for(i = 0 ; i <= 1 ; i++)
-//    {
-//        ab[i][1] = 0;
-//    }
-}
 
 
 

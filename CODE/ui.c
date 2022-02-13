@@ -1,5 +1,6 @@
 #include "ui.h"
 #include "PID_Speed.h"
+#include "Camera.h"
 #include "headfile.h"
 
 
@@ -19,6 +20,7 @@ uint8 Bluetooth_Rdat = 0;//蓝牙串口接收的数据
 extern float PID_Speed_P;
 extern float PID_Speed_I;
 extern float PID_Speed_D;
+
 
 Item_Lib const Page0_Item[] =
 {
@@ -52,7 +54,8 @@ Item_Lib const Page5_Item[] =
 Item_Lib const Page4_Item[] =
 {
 
-        "bianliang",&bianliang,Float,RW,
+        "T_OTSU",&T_OSTU,Uint8_t,RW,
+        "SelfControl_OSTU",&SelfControl_OSTU,Uint8_t,RW,
 
 //                "ccqd",&t,Float,RW,
 //                "zz",&zz,Float,RW,
