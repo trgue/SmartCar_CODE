@@ -37,9 +37,8 @@ int core0_main(void)
 {
 	get_clk();//获取时钟频率  务必保留
 	//用户在此处调用各种初始化函数等
-//	All_Init();
-	UI_Init();//UI初始化
-	mt9v03x_init();//摄像头初始化
+	All_Init();
+
 
     //等待所有核心初始化完毕
 	IfxCpu_emitEvent(&g_cpuSyncEvent);
@@ -52,7 +51,7 @@ int core0_main(void)
 	while (1)
 	{
 		//用户在此处编写任务代码
-//	    UI_Main();
+	    UI_Main();
 	    CameraWorking996();
 
 
