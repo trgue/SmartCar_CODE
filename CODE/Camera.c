@@ -12,11 +12,13 @@
 
 
 //变量定义
-#define ShowFlag  0 //控制摄像头显示模式:模式0为输出原图像,模式1为输出二值化后图像,模式2为输出边缘图像
+#define ShowFlag  2 //控制摄像头显示模式:模式0为输出原图像,模式1为输出二值化后图像,模式2为输出边缘图像,模式3为使用上位机
+#define DoImageFlag   2 //控制图像处理模式:模式0为sobel边缘提取（阈值动态控制），模式1为sobel边缘提取（阈值手动控制），模式2为一般方法
 
 
-uint8 Image_Binarization[MT9V03X_H][MT9V03X_W] = {0};
-uint8 Image_Soble[MT9V03X_H][MT9V03X_W] = {0};
+uint8 Image_Binarization[MT9V03X_H][MT9V03X_W];
+uint8 Image_Side[MT9V03X_H][MT9V03X_W];
+
 uint8 T_OSTU = 0;
 uint8 SelfControl_OSTU = 0;
 
@@ -103,10 +105,19 @@ void binarization()
 }
 
 
+
+
+
+
+
+
+
+
+
 //基于sobel边缘检测算子的一种边缘检测
 void my_sobel(unsigned char imageIn[MT9V03X_H][MT9V03X_W], unsigned char imageOut[MT9V03X_H][MT9V03X_W], unsigned char Threshold)
 {
-    /** 卷积核大小 */
+    /* 卷积核大小 */
     short KERNEL_SIZE = 3;
     short xStart = KERNEL_SIZE / 2;
     short xEnd = MT9V03X_W - KERNEL_SIZE / 2;
@@ -170,21 +181,146 @@ void my_sobel(unsigned char imageIn[MT9V03X_H][MT9V03X_W], unsigned char imageOu
     }
 }
 
+//一般方法扫边界
+void Side_Search()
+{
+    //变量定义
+    int16 i,j;
+    int16 Left_Line_Flag[MT9V03X_H] = {0};  //左边线是否扫到标识集
+    int16 Right_Line_Flag[MT9V03X_H] = {0}; //右边线是否扫到标识集
+    int16 Middle_Line[MT9V03X_H] = {0};      //中线集
+    int16 Left_Line[MT9V03X_H] = {0};       //左边线集
+    int16 Right_Line[MT9V03X_H] = {0};      //右边线集
+
+    //清除上一帧图像
+    for(i = 0 ; i < MT9V03X_H ; i++)
+    {
+        for(j = 0 ; j < MT9V03X_W ; j++)
+        {
+            Image_Side[i][j] = WHITE;
+        }
+    }
+
+
+    //开始扫线
+    for(i = MT9V03X_H - 1 ; i >= 0 ; i--)
+    {
+        //第一行处理
+        if(i == MT9V03X_H - 1)
+        {
+            //往左扫
+            for(j = MT9V03X_W / 2 ; j >= 0 ; j = j--)
+            {
+                if(Image_Binarization[i][j] == BLACK && Image_Binarization[i][j + 1] == BLACK)//当前点为黑点且上一个为白点
+                {
+                    Image_Side[i][j] = BLACK;
+                    Left_Line_Flag[i] = 1;
+                    Left_Line[i] = j;
+                    break;
+                }
+                else
+                {
+                    ;
+                }
+            }
+            //往右扫
+            for(j = MT9V03X_W / 2 ; j <= MT9V03X_W - 1 ; j = j++)
+            {
+                if(Image_Binarization[i][j] == BLACK && Image_Binarization[i][j - 1] == BLACK)
+                {
+                    Image_Side[i][j] = BLACK;
+                    Right_Line_Flag[i] = 1;
+                    Right_Line[i] = j;
+                    break;
+                }
+                else
+                {
+                    ;
+                }
+            }
+            Middle_Line[i] = (Left_Line[i] + Right_Line[i]) / 2;
+            Image_Side[i][Middle_Line[i]] = BLACK;//中线涂黑
+
+        }
+        //非第一行处理
+        else
+        {
+            //往左扫
+            for(j = Middle_Line[i + 1] ; j >= 0 ; j = j--)
+            {
+                if(Image_Binarization[i][j] == BLACK && Image_Binarization[i][j + 1] == BLACK)//当前点为黑点且上一个为白点
+                {
+                    Image_Side[i][j] = BLACK;
+                    Left_Line_Flag[i] = 1;
+                    Left_Line[i] = j;
+                    break;
+                }
+                else
+                {
+                    ;
+                }
+            }
+            //往右扫
+            for(j = Middle_Line[i + 1] ; j <= MT9V03X_W - 1 ; j = j++)
+            {
+                if(Image_Binarization[i][j] == BLACK && Image_Binarization[i][j - 1] == BLACK)
+                {
+                    Image_Side[i][j] = BLACK;
+                    Right_Line_Flag[i] = 1;
+                    Right_Line[i] = j;
+                    break;
+                }
+                else
+                {
+                    ;
+                }
+            }
+            if(i <= 60 && Left_Line_Flag[i] == 1 && Right_Line_Flag[i] == 1)
+            {
+                ;
+            }
+            Middle_Line[i] = (Left_Line[i] + Right_Line[i]) / 2;
+
+            //如果所得到的相邻中线点已经是黑色,则已经扫描出赛道,打断
+            if(Image_Binarization[i][Middle_Line[i]] == BLACK && Image_Binarization[i + 1][Middle_Line[i]] == BLACK )
+            {
+
+            }
+
+            Image_Side[i][Middle_Line[i]] = BLACK;//中线涂黑
+
+        }
+    }
+}
+
+
+
+
+
+
+
+
 
 void CameraWorking996()
 {
     if(mt9v03x_finish_flag)
     {
         binarization();
-//        my_sobel(mt9v03x_image , Image_Soble , T_OSTU);
-//        my_sobel(mt9v03x_image , Image_Soble , SelfControl_OSTU);//自己调整大津法
+        switch(DoImageFlag)
+        {
+          case 0:my_sobel(mt9v03x_image , Image_Side , T_OSTU);break;
+          case 1:my_sobel(mt9v03x_image , Image_Side , SelfControl_OSTU);break;//自己调整大津法
+          case 2:Side_Search();break;
 //        seekfree_sendimg_03x(UART_1, mt9v03x_image[0], MT9V03X_W, MT9V03X_H);//使用上位机
+        }
         switch(ShowFlag)
         {
             case 0:lcd_displayimage032(mt9v03x_image[0],MT9V03X_W, MT9V03X_H);break;
             case 1:lcd_displayimage032(Image_Binarization[0],MT9V03X_W, MT9V03X_H);break;
-            case 2:lcd_displayimage032(Image_Soble[0],MT9V03X_W, MT9V03X_H);
+            case 2:lcd_displayimage032(Image_Side[0],MT9V03X_W, MT9V03X_H);break;
+            case 3:seekfree_sendimg_03x(UART_1, mt9v03x_image[0], MT9V03X_W, MT9V03X_H);//使用上位机
         }
+
         mt9v03x_finish_flag = 0;
 
     }

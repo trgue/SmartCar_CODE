@@ -23,7 +23,7 @@
 //所有初始化函数
 void All_Init()
 {
-    uart_init(UART_1, 9600, UART1_TX_P11_12, UART1_RX_P11_10);//串口初始化
+    uart_init(UART_1, 115200, UART1_TX_P11_12, UART1_RX_P11_10);//串口初始化
 //    lcd_init();//lcd屏幕初始化
     UI_Init();//UI初始化
 //    gpt12_init(GPT12_T2, GPT12_T2INB_P33_7, GPT12_T2EUDB_P33_6);//编码器初始化
