@@ -51,8 +51,9 @@ int core0_main(void)
 	while (1)
 	{
 		//用户在此处编写任务代码
-	    UI_Main();
+//	    UI_Main();
 	    CameraWorking996();
+	    Lcd_Show();
 
 
 
