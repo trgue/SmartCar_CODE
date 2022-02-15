@@ -18,5 +18,7 @@ void CameraWorking996();
 
 extern uint8 T_OSTU;
 extern uint8 SelfControl_OSTU;
+extern int16 RightDown_Line_Break_Point[1];
+extern int16 Right_Line[MT9V03X_H];
 
 #endif /* CODE_CAMERA_H_ */

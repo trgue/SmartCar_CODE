@@ -18,6 +18,9 @@
 //所有显示函数
 void Lcd_Show()
 {
-    lcd_showuint8(0 , 0 , T_OSTU);
+    lcd_showint16(0 , 0 , RightDown_Line_Break_Point[0]);
+    lcd_showint16(0 , 1 , RightDown_Line_Break_Point[1]);
+    lcd_showint16(0 , 2 , Right_Line[90]);
+
 }
 

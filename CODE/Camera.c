@@ -12,7 +12,7 @@
 
 
 //变量定义
-#define ShowFlag  2 //控制摄像头显示模式:模式0为输出原图像,模式1为输出二值化后图像,模式2为输出边缘图像,模式3为使用上位机
+#define ShowFlag  1 //控制摄像头显示模式:模式0为输出原图像,模式1为输出二值化后图像,模式2为输出边缘图像,模式3为使用上位机
 #define DoImageFlag   2 //控制图像处理模式:模式0为sobel边缘提取（阈值动态控制），模式1为sobel边缘提取（阈值手动控制），模式2为一般方法
 
 
@@ -21,6 +21,18 @@ uint8 Image_Side[MT9V03X_H][MT9V03X_W];
 
 uint8 T_OSTU = 0;
 uint8 SelfControl_OSTU = 0;
+int16 Left_Line_Flag[MT9V03X_H] = {0};       //左边线是否扫到标识集
+int16 Right_Line_Flag[MT9V03X_H] = {0};      //右边线是否扫到标识集
+int16 Middle_Line[MT9V03X_H] = {0};          //中线集
+int16 Left_Line[MT9V03X_H] = {0};            //左边线集
+int16 Right_Line[MT9V03X_H] = {0};           //右边线集
+int16 RightDown_Line_Break_Point[1] = {0};   //右下拐点
+int16 Break_Line = 0;                        //中线出赛道行数
+int16 All_Get_Times = 0;                     //80行以内左右边界都扫到次数
+int16 All_Lose_Times = 0;                    //40行以内左右边界都丢失次数
+int16 Left_Break_Line = 0;                   //30行以上左边线断裂行数
+int16 Right_Break_Line = 0;                  //30行以上右边线断裂行数
+uint8 Straight_Flag = 0;//直线判断标志
 
 
 
@@ -181,16 +193,15 @@ void my_sobel(unsigned char imageIn[MT9V03X_H][MT9V03X_W], unsigned char imageOu
     }
 }
 
+
+
 //一般方法扫边界
 void Side_Search()
 {
     //变量定义
     int16 i,j;
-    int16 Left_Line_Flag[MT9V03X_H] = {0};  //左边线是否扫到标识集
-    int16 Right_Line_Flag[MT9V03X_H] = {0}; //右边线是否扫到标识集
-    int16 Middle_Line[MT9V03X_H] = {0};      //中线集
-    int16 Left_Line[MT9V03X_H] = {0};       //左边线集
-    int16 Right_Line[MT9V03X_H] = {0};      //右边线集
+    float Middle_Line_Sum1 = 0;             //前40行的中线偏差平方和
+    float Middle_Line_Sum2 = 0;             //前40行的中线偏差和
 
     //清除上一帧图像
     for(i = 0 ; i < MT9V03X_H ; i++)
@@ -238,9 +249,6 @@ void Side_Search()
                     ;
                 }
             }
-            Middle_Line[i] = (Left_Line[i] + Right_Line[i]) / 2;
-            Image_Side[i][Middle_Line[i]] = BLACK;//中线涂黑
-
         }
         //非第一行处理
         else
@@ -275,27 +283,79 @@ void Side_Search()
                     ;
                 }
             }
-            if(i <= 60 && Left_Line_Flag[i] == 1 && Right_Line_Flag[i] == 1)
-            {
-                ;
-            }
-            Middle_Line[i] = (Left_Line[i] + Right_Line[i]) / 2;
-
-            //如果所得到的相邻中线点已经是黑色,则已经扫描出赛道,打断
-            if(Image_Binarization[i][Middle_Line[i]] == BLACK && Image_Binarization[i + 1][Middle_Line[i]] == BLACK )
-            {
-
-            }
-
-            Image_Side[i][Middle_Line[i]] = BLACK;//中线涂黑
 
         }
+
+
+        //初步特征值提取
+        if(i <= 80 && Left_Line_Flag[i] == 1 && Right_Line_Flag[i] == 1)
+        {
+            All_Get_Times++;
+        }
+        if(i <= 40 && Left_Line_Flag[i] == 0 && Right_Line_Flag[i] == 0)
+        {
+            All_Lose_Times++;
+        }
+        if(i >= 30 && Left_Line[i] - Left_Line[i - 1] <= -20)
+        {
+            Left_Break_Line++;
+        }
+        if(i >= 30 && Right_Line[i] - Right_Line[i - 1] >= 20)
+        {
+            Right_Break_Line++;
+        }
+
+        //中线值
+        Middle_Line[i] = (Left_Line[i] + Right_Line[i]) / 2;
+        if( i<= 40)
+        {
+            Middle_Line_Sum1 += (94 - Middle_Line[i])*(94 - Middle_Line[i]);
+            Middle_Line_Sum2 += (94 - Middle_Line[i]);
+        }
+
+//        //如果所得到的相邻中线点已经是黑色,则已经扫描出赛道,打断
+//        if(Image_Binarization[i][Middle_Line[i]] == BLACK && Image_Binarization[i + 1][Middle_Line[i]] == BLACK )
+//        {
+//            Break_Line = i;
+//            if(i > 30)//30行以内不会断线
+//            {
+//                break;
+//            }
+//        }
+
+        Image_Side[i][Middle_Line[i]] = BLACK;//中线涂黑
+    }
+
+    //判断直道弯道
+    if(sqrt(Middle_Line_Sum1) / 40 > 3.2 || Middle_Line_Sum2 / 40 > 18.5 || Middle_Line_Sum2 / 40 < -18.5)
+    {
+        Straight_Flag = 1;
+    }
+    else
+    {
+        Straight_Flag = 0;
     }
 }
 
 
 
-
+//找右下拐点
+void Find_Right_Down_Point(int16 start_point , int16 end_point , uint8 road_name)
+{
+    int16 i = 0;
+    if(road_name == 0)
+    {
+        for(i = start_point ; i >= end_point ; i--)
+        {
+            if(abs(Right_Line[i - 1] - Right_Line[i]) <= 3 && abs(Right_Line[i - 2] - Right_Line[i - 1]) <= 3 && (Right_Line[i - 3] - Right_Line[i - 2]) > 2
+                    && Right_Line_Flag[i] == 1 && Right_Line_Flag[i - 1] == 1 && Right_Line_Flag[i - 2] == 1)
+            {
+                RightDown_Line_Break_Point[0] = Right_Line[i - 2];
+                RightDown_Line_Break_Point[1] = i - 2;
+            }
+        }
+    }
+}
 
 
 
@@ -321,6 +381,7 @@ void CameraWorking996()
             case 3:seekfree_sendimg_03x(UART_1, mt9v03x_image[0], MT9V03X_W, MT9V03X_H);//使用上位机
         }
 
+        Find_Right_Down_Point(119 , 60 , 0);
         mt9v03x_finish_flag = 0;
 
     }
