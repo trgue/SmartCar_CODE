@@ -8,34 +8,40 @@
 
 #include "headfile.h"
 #include "Balance.h"
+#include "tuoluoyi.h"
 #include "ICM20602_Angle_Get.h"
+/*
 #include "BrushlessMotor_ADC.h"
 #include "BrushlessMotor_HALL.h"
 #include "BrushlessMotor.h"
 #include "Filter.h"
-
+*/
 
 //变量定义
 #define MOTOR_DEADNUM 500
+#define MOTOR3_A   ATOM0_CH4_P02_4  //定义3电机正转PWM引脚
+#define MOTOR3_B   ATOM0_CH5_P02_5  //定义3电机反转PWM引脚
 int16 encoder_flywheel = 0;
 uint8 Flag = 0;
-float flywheel_balance_P = 0;
-float flywheel_balance_I = 0;
+float flywheel_balance_P = 1000;
+float flywheel_balance_I = 4;
 float flywheel_balance_D = 0;
-float flywheel_speed_P = 0;
-float flywheel_speed_I = 0;
+float flywheel_speed_P = 90;
+float flywheel_speed_I = 90;
 //float flywheel_speed_D = 0;
 int16 flywheel_duty = 0;
 float Angle = 0;
 float Angle_Zero = 0;
+extern float Angle_X_Final;
+
 
 
 
 //编码器值获取
 void encoder_Flywheel_get()
 {
-    encoder_flywheel = gpt12_get(GPT12_T2);
-    gpt12_clear(GPT12_T2);
+    encoder_flywheel = gpt12_get(GPT12_T4);
+    gpt12_clear(GPT12_T4);
 }
 
 
@@ -88,10 +94,10 @@ void flywheel_control_Brush()
 {
     int16 PWM , PWM_error;
     encoder_Flywheel_get();
-    Angle = Angle_Get();
+    Angle = Angle_X_Final;
     PWM = flywheel_balance(Angle , icm_acc_x);
     PWM_error = flywheel_speed(encoder_flywheel);
-    flywheel_duty = PWM - PWM_error;
+    flywheel_duty = -(PWM - PWM_error);
     //限幅
     if(flywheel_duty < -8000)
     {
@@ -114,10 +120,22 @@ void flywheel_control_Brush()
     {
         flywheel_duty = 0;
     }
+    if(0<=flywheel_duty) //电机1   正转 设置占空比为 百分之 (1000/GTM_ATOM0_PWM_DUTY_MAX*100)
+    {
+        pwm_duty(MOTOR3_A, flywheel_duty);
+        pwm_duty(MOTOR3_B, 0);
+    }
+    else                //电机1   反转
+    {
+        pwm_duty(MOTOR3_A, 0);
+        pwm_duty(MOTOR3_B, -flywheel_duty);
+    }
+
+
 
 }
 
-
+/*
 //动量轮控制(无刷电机)
 //使用无刷时需将PWM中断开启
 void flywheel_control_Brushless()
@@ -135,7 +153,7 @@ void flywheel_control_Brushless()
         duty = (int16)closed_loop_pi_calc((float)(motor_control.set_speed + speed_filter.data_average));
 }
 
-
+*/
 
 
 

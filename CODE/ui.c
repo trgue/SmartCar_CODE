@@ -1,6 +1,7 @@
 #include "ui.h"
 #include "PID_Speed.h"
 #include "Camera.h"
+#include "Balance.h"
 #include "headfile.h"
 
 
@@ -27,9 +28,11 @@ Item_Lib const Page0_Item[] =
 
 
 
-        "P",&PID_Speed_P,Float,RW,
-        "I",&PID_Speed_I,Float,RW,
-        "D",&PID_Speed_D,Float,RW,
+        "P",&flywheel_balance_P,Float,RW,
+        "I",&flywheel_balance_I,Float,RW,
+        "D",&flywheel_balance_D,Float,RW,
+        "speed",&flywheel_duty,Int16_t,RW,
+        "encoder",&encoder_flywheel,Int16_t,RW,
 
 
 
@@ -44,8 +47,8 @@ Item_Lib const Page0_Item[] =
 Item_Lib const Page5_Item[] =
 {
 
-        "P",&PID_Speed_P,Float,RW,
-//        "PID_SG.KI",&PID_2KI,Float,RW,
+        "P_speed",&flywheel_speed_P,Float,RW,
+        "I_speed",&flywheel_speed_I,Float,RW,
 //        "PID_SG.KD",&PID_2KD,Float,RW,
 
 

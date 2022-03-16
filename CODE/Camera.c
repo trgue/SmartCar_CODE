@@ -6,13 +6,13 @@
  */
 
 //头文件包含
-#include "headfile.h"
 #include "Camera.h"
+#include "headfile.h"
 
 
 
 //变量定义
-#define ShowFlag  1 //控制摄像头显示模式:模式0为输出原图像,模式1为输出二值化后图像,模式2为输出边缘图像,模式3为使用上位机
+#define ShowFlag  3 //控制摄像头显示模式:模式0为输出原图像,模式1为输出二值化后图像,模式2为输出边缘图像,模式3为使用上位机
 #define DoImageFlag   2 //控制图像处理模式:模式0为sobel边缘提取（阈值动态控制），模式1为sobel边缘提取（阈值手动控制），模式2为一般方法
 
 
@@ -106,11 +106,11 @@ void binarization()
       {
           if(mt9v03x_image[i][j] <= T_OSTU)
           {
-              Image_Binarization[i][j] = BLACK;
+              Image_Binarization[MT9V03X_H - i - 1][MT9V03X_W - i - 1] = BLACK;
           }
           else
           {
-              Image_Binarization[i][j] = WHITE;
+              Image_Binarization[MT9V03X_H - i - 1][MT9V03X_W - i - 1] = WHITE;
           }
       }
     }
@@ -200,9 +200,10 @@ void Side_Search()
 {
     //变量定义
     int16 i,j;
+    /*
     float Middle_Line_Sum1 = 0;             //前40行的中线偏差平方和
     float Middle_Line_Sum2 = 0;             //前40行的中线偏差和
-
+    */
     //清除上一帧图像
     for(i = 0 ; i < MT9V03X_H ; i++)
     {
@@ -214,15 +215,15 @@ void Side_Search()
 
 
     //开始扫线
-    for(i = MT9V03X_H - 1 ; i >= 0 ; i--)
+    for(i = 0 ; i < MT9V03X_H ; i++)
     {
         //第一行处理
-        if(i == MT9V03X_H - 1)
+        if(i == 0)
         {
             //往左扫
-            for(j = MT9V03X_W / 2 ; j >= 0 ; j = j--)
+            for(j = MT9V03X_W / 2 ; j <= MT9V03X_W - 1 ; j = j++)
             {
-                if(Image_Binarization[i][j] == BLACK && Image_Binarization[i][j + 1] == BLACK)//当前点为黑点且上一个为白点
+                if(Image_Binarization[i][j] == BLACK && Image_Binarization[i][j - 1] == BLACK)//当前点为黑点且上一个为白点
                 {
                     Image_Side[i][j] = BLACK;
                     Left_Line_Flag[i] = 1;
@@ -235,9 +236,9 @@ void Side_Search()
                 }
             }
             //往右扫
-            for(j = MT9V03X_W / 2 ; j <= MT9V03X_W - 1 ; j = j++)
+            for(j = MT9V03X_W / 2 ; j >= 0 ; j = j--)
             {
-                if(Image_Binarization[i][j] == BLACK && Image_Binarization[i][j - 1] == BLACK)
+                if(Image_Binarization[i][j] == BLACK && Image_Binarization[i][j + 1] == BLACK)
                 {
                     Image_Side[i][j] = BLACK;
                     Right_Line_Flag[i] = 1;
@@ -254,9 +255,9 @@ void Side_Search()
         else
         {
             //往左扫
-            for(j = Middle_Line[i + 1] ; j >= 0 ; j = j--)
+            for(j = Middle_Line[i - 1] ; j <= MT9V03X_W - 1 ; j = j++)
             {
-                if(Image_Binarization[i][j] == BLACK && Image_Binarization[i][j + 1] == BLACK)//当前点为黑点且上一个为白点
+                if(Image_Binarization[i][j] == BLACK && Image_Binarization[i][j - 1] == BLACK)//当前点为黑点且上一个为白点
                 {
                     Image_Side[i][j] = BLACK;
                     Left_Line_Flag[i] = 1;
@@ -269,9 +270,9 @@ void Side_Search()
                 }
             }
             //往右扫
-            for(j = Middle_Line[i + 1] ; j <= MT9V03X_W - 1 ; j = j++)
+            for(j = Middle_Line[i - 1] ; j >= 0 ; j = j--)
             {
-                if(Image_Binarization[i][j] == BLACK && Image_Binarization[i][j - 1] == BLACK)
+                if(Image_Binarization[i][j] == BLACK && Image_Binarization[i][j + 1] == BLACK)
                 {
                     Image_Side[i][j] = BLACK;
                     Right_Line_Flag[i] = 1;
@@ -286,7 +287,7 @@ void Side_Search()
 
         }
 
-
+/*
         //初步特征值提取
         if(i <= 80 && Left_Line_Flag[i] == 1 && Right_Line_Flag[i] == 1)
         {
@@ -304,14 +305,16 @@ void Side_Search()
         {
             Right_Break_Line++;
         }
-
+*/
         //中线值
         Middle_Line[i] = (Left_Line[i] + Right_Line[i]) / 2;
+/*
         if( i<= 40)
         {
             Middle_Line_Sum1 += (94 - Middle_Line[i])*(94 - Middle_Line[i]);
             Middle_Line_Sum2 += (94 - Middle_Line[i]);
         }
+
 
 //        //如果所得到的相邻中线点已经是黑色,则已经扫描出赛道,打断
 //        if(Image_Binarization[i][Middle_Line[i]] == BLACK && Image_Binarization[i + 1][Middle_Line[i]] == BLACK )
@@ -324,8 +327,9 @@ void Side_Search()
 //        }
 
         Image_Side[i][Middle_Line[i]] = BLACK;//中线涂黑
+*/
     }
-
+/*
     //判断直道弯道
     if(sqrt(Middle_Line_Sum1) / 40 > 3.2 || Middle_Line_Sum2 / 40 > 18.5 || Middle_Line_Sum2 / 40 < -18.5)
     {
@@ -335,10 +339,11 @@ void Side_Search()
     {
         Straight_Flag = 0;
     }
+*/
 }
 
 
-
+/*
 //找右下拐点
 void Find_Right_Down_Point(int16 start_point , int16 end_point , uint8 road_name)
 {
@@ -358,6 +363,38 @@ void Find_Right_Down_Point(int16 start_point , int16 end_point , uint8 road_name
 }
 
 
+*/
+
+void Add_Line(int16 x0, int16 y0, int16 x1, int16 y1)//补线
+{
+    int16 x, i;
+    float K = (x0 - x1) * 1.0 / (y0 - y1);
+    if (K > 20) K = 20;
+    if (K < -20) K = -20;
+    if (y1 > y0)
+    {
+        for (i = y0 + 1; i < y1; i++)
+        {
+            x = x0 + (i - y0) * K;
+            Image_Binarization[i][x] = 0;
+            Image_Binarization[i][x - 1] = 0;
+            //        Use_Image[i-1][x-1] = 0;
+            //        Use_Image[i-1][x-2] = 0;
+        }
+    }
+    else
+    {
+        for (i = y1 + 1; i < y0; i++)
+        {
+            x = x0 + (i - y0) * K;
+            Image_Binarization[i][x] = 0;
+            Image_Binarization[i][x - 1] = 0;
+            //        Use_Image[i-1][x-1] = 0;
+            //        Use_Image[i-1][x-2] = 0;
+        }
+    }
+
+}
 
 
 
@@ -371,7 +408,6 @@ void CameraWorking996()
           case 0:my_sobel(mt9v03x_image , Image_Side , T_OSTU);break;
           case 1:my_sobel(mt9v03x_image , Image_Side , SelfControl_OSTU);break;//自己调整大津法
           case 2:Side_Search();break;
-//        seekfree_sendimg_03x(UART_1, mt9v03x_image[0], MT9V03X_W, MT9V03X_H);//使用上位机
         }
         switch(ShowFlag)
         {
@@ -381,7 +417,8 @@ void CameraWorking996()
             case 3:seekfree_sendimg_03x(UART_1, mt9v03x_image[0], MT9V03X_W, MT9V03X_H);//使用上位机
         }
 
-        Find_Right_Down_Point(119 , 60 , 0);
+//        Find_Right_Down_Point(119 , 60 , 0);
+        lcd_displayimage032(mt9v03x_image[0],MT9V03X_W, MT9V03X_H);
         mt9v03x_finish_flag = 0;
 
     }

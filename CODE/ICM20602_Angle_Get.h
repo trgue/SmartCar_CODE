@@ -14,7 +14,13 @@ void icmGetValues() ;
 void icmAHRSupdate();
 void IMU_quaterToEulerianAngles();
 float Angle_Get();
+//void ComplementaryFiltering2();
+float mysqrt(float x);
+void ICM_20602(void);
+void Kalman_Filter_X(float Accel,float Gyro);
+void Kalman_Filter_Y(float Accel,float Gyro) ;//¿¨¶ûÂüº¯Êý
 
+extern float Angle_X_Final;
 
 
 
