@@ -32,6 +32,7 @@ void All_Init()
     icm20602_init_spi();//icm20602初始化
     gtm_pwm_init(ATOM0_CH5_P02_5, 17000,  0);//ATOM 0模块的通道4 使用P02_4引脚输出PWM  PWM频率50HZ  占空比百分之0/GTM_ATOM0_PWM_DUTY_MAX*100  GTM_ATOM0_PWM_DUTY_MAX宏定义在zf_gtm_pwm.h
     gtm_pwm_init(ATOM0_CH4_P02_4, 17000,  0);
+    gtm_pwm_init(ATOM0_CH1_P33_9, 50, 700);//舵机初始化
 //    adc_collection_init();//初始化adc通道，adc用于采集电源电压、母线电流、相电流的
 //    hall_init();//霍尔初始化
 //    move_filter_init(&speed_filter);//滑动平均滤波初始化

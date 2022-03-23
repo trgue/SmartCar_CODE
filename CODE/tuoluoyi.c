@@ -5,17 +5,18 @@
  *      Author: 廖杰民
  */
 #include "tuoluoyi.h"
+#include "headfile.h"
 
 //get accel and gyro from iam20609
 // 对accel一阶低通滤波(参考匿名)，对gyro转成弧度每秒(2000dps)
 #define new_weight           0.35f
 #define old_weight           0.65f
-#define icm_acc_x mpu_acc_x
-#define icm_acc_y mpu_acc_y
-#define icm_acc_z mpu_acc_z
-#define icm_gyro_x mpu_gyro_x
-#define icm_gyro_y mpu_gyro_y
-#define icm_gyro_z mpu_gyro_z
+#define mpu_acc_x icm_acc_x
+#define mpu_acc_y icm_acc_y
+#define mpu_acc_z icm_acc_z
+#define mpu_gyro_x icm_gyro_x
+#define mpu_gyro_y icm_gyro_y
+#define mpu_gyro_z icm_gyro_z
 #define M_PI 3.14159
 float values[6];
 
@@ -31,19 +32,21 @@ void IMU_getValues(void)
 {
 
 
+    get_icm20602_accdata_spi();
+    get_icm20602_gyro_spi();
     static float lastaccel[3]= {0,0,0};
     int i;
-    values[0] = ((float)mpu_acc_x) * new_weight + lastaccel[0] * old_weight;
-    values[1] = ((float)mpu_acc_y) * new_weight + lastaccel[1] * old_weight;
-    values[2] = ((float)mpu_acc_z) * new_weight + lastaccel[2] * old_weight;
+    values[0] = ((float)icm_acc_x) * new_weight + lastaccel[0] * old_weight;
+    values[1] = ((float)icm_acc_y) * new_weight + lastaccel[1] * old_weight;
+    values[2] = ((float)icm_acc_z) * new_weight + lastaccel[2] * old_weight;
     for(i=0; i<3; i++)
     {
         lastaccel[i] = values[i];
     }
 
-    values[3] = ((float)mpu_gyro_x) * M_PI / 180 / 16.4f;
-    values[4] = ((float)mpu_gyro_y) * M_PI / 180 / 16.4f;
-    values[5] = ((float)mpu_gyro_z) * M_PI / 180 / 16.4f;
+    values[3] = ((float)icm_gyro_x) * M_PI / 180 / 16.4f;
+    values[4] = ((float)icm_gyro_y) * M_PI / 180 / 16.4f;
+    values[5] = ((float)icm_gyro_z) * M_PI / 180 / 16.4f;
 
     //
 }
@@ -116,32 +119,32 @@ float param_Ki = 0.20;   //陀螺仪收敛速率的积分增益 0.2
                Q_info_q1 = q1 * norm;
                Q_info_q2 = q2 * norm;
                Q_info_q3 = q3 * norm;
-               IMU_getValues();
-               IMU_AHRSupdate_noMagnetic( values[3],  values[4],  values[5],  values[0], values[1],  values[2]);
-               pitch = asin(-2*q1*q3 + 2*q0*q2) * 180/M_PI; // pitch
-                                 roll = atan2(2*q2*q3 + 2*q0*q1, -2*q1*q1 - 2*q2*q2 + 1) * 180/M_PI; // roll
-                                yaw = atan2(2*q1*q2 + 2*q0*q3, -2*q2*q2 - 2*q3*q3 + 1) * 180/M_PI; // yaw
-
-
-                                 if(roll>90 || roll<-90)
-                                 {
-                                     if(pitch > 0)
-                                     {
-                                         pitch = 180-pitch;
-                                     }
-                                     if(pitch < 0)
-                                     {
-                                        pitch = -(180+pitch);
-                                     }
-                                 }
-                                 if(yaw > 180)
-                                 {
-                                     yaw -=360;
-                                 }
-                                 else if(yaw <-180)
-                                 {
-                                     yaw +=360;
-                                 }
+//               IMU_getValues();
+//               IMU_AHRSupdate_noMagnetic( values[3],  values[4],  values[5],  values[0], values[1],  values[2]);
+//               pitch = asin(-2*q1*q3 + 2*q0*q2) * 180/M_PI; // pitch
+//                                 roll = atan2(2*q2*q3 + 2*q0*q1, -2*q1*q1 - 2*q2*q2 + 1) * 180/M_PI; // roll
+//                                yaw = atan2(2*q1*q2 + 2*q0*q3, -2*q2*q2 - 2*q3*q3 + 1) * 180/M_PI; // yaw
+//
+//
+//                                 if(roll>90 || roll<-90)
+//                                 {
+//                                     if(pitch > 0)
+//                                     {
+//                                         pitch = 180-pitch;
+//                                     }
+//                                     if(pitch < 0)
+//                                     {
+//                                        pitch = -(180+pitch);
+//                                     }
+//                                 }
+//                                 if(yaw > 180)
+//                                 {
+//                                     yaw -=360;
+//                                 }
+//                                 else if(yaw <-180)
+//                                 {
+//                                     yaw +=360;
+//                                 }
 
 }
 

@@ -9,7 +9,7 @@
 #include "headfile.h"
 #include "Balance.h"
 #include "tuoluoyi.h"
-#include "ICM20602_Angle_Get.h"
+
 /*
 #include "BrushlessMotor_ADC.h"
 #include "BrushlessMotor_HALL.h"
@@ -18,21 +18,23 @@
 */
 
 //变量定义
-#define MOTOR_DEADNUM 500
+#define MOTOR_DEADNUM 0
 #define MOTOR3_A   ATOM0_CH4_P02_4  //定义3电机正转PWM引脚
 #define MOTOR3_B   ATOM0_CH5_P02_5  //定义3电机反转PWM引脚
 int16 encoder_flywheel = 0;
-uint8 Flag = 0;
-float flywheel_balance_P = 1000;
-float flywheel_balance_I = 4;
-float flywheel_balance_D = 0;
-float flywheel_speed_P = 90;
-float flywheel_speed_I = 90;
+int16 limit_speed = 9000;
+uint8 Flag = 1;
+float flywheel_balance_P = 1700;
+float flywheel_balance_I = 3.4;
+float flywheel_balance_D =45;
+float flywheel_speed_P = 10;
+float flywheel_speed_I = 0.2;
+float error_my = 0;
 //float flywheel_speed_D = 0;
 int16 flywheel_duty = 0;
 float Angle = 0;
-float Angle_Zero = 0;
-extern float Angle_X_Final;
+float Angle_Zero = 1;
+
 
 
 
@@ -53,10 +55,10 @@ void encoder_Flywheel_get()
 float flywheel_balance(float angle , float gyro)
 {
     float PWM = 0;
-    float error = 0;
+
     static float errors;
-    error = angle - Angle_Zero;
-    errors += error;
+    error_my = angle - Angle_Zero;
+    errors += error_my;
     if(errors > 30)
     {
         errors = 30;
@@ -65,13 +67,13 @@ float flywheel_balance(float angle , float gyro)
     {
         errors = -30;
     }
-    PWM = error * flywheel_balance_P + errors * flywheel_balance_I + gyro * flywheel_balance_D;
+    PWM = error_my * flywheel_balance_P + errors * flywheel_balance_I + gyro * flywheel_balance_D;
     return PWM;
 }
 
 
 //动量轮速度闭环
-float flywheel_speed(int encoder)
+float flywheel_speed(int16 encoder)
 {
     static float Encoder,Encoder_Integral;
     float Velocity,Encoder_Least;
@@ -93,19 +95,20 @@ float flywheel_speed(int encoder)
 void flywheel_control_Brush()
 {
     int16 PWM , PWM_error;
+    Flag = 1;
     encoder_Flywheel_get();
-    Angle = Angle_X_Final;
-    PWM = flywheel_balance(Angle , icm_acc_x);
+    Angle = roll;
+    PWM = flywheel_balance(Angle , icm_gyro_x);
     PWM_error = flywheel_speed(encoder_flywheel);
     flywheel_duty = -(PWM - PWM_error);
     //限幅
-    if(flywheel_duty < -8000)
+    if(flywheel_duty < -limit_speed)
     {
-        flywheel_duty = -8000;
+        flywheel_duty = -limit_speed;
     }
-    else if(flywheel_duty > 8000)
+    else if(flywheel_duty > limit_speed)
     {
-        flywheel_duty = 8000;
+        flywheel_duty = limit_speed;
     }
     //死区校正
     else if(flywheel_duty > 0)
@@ -116,9 +119,14 @@ void flywheel_control_Brush()
     {
         flywheel_duty -= MOTOR_DEADNUM;
     }
-    if((flywheel_duty < 1000)&&(flywheel_duty > 1000))
+//    if((flywheel_duty < 1100)&&(flywheel_duty > -1100))
+//    {
+//        flywheel_duty = 0;
+//    }
+    if(Angle < -25 || Angle > 25)
     {
         flywheel_duty = 0;
+        Flag = 0;
     }
     if(0<=flywheel_duty) //电机1   正转 设置占空比为 百分之 (1000/GTM_ATOM0_PWM_DUTY_MAX*100)
     {

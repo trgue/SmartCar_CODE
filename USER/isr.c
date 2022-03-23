@@ -19,65 +19,35 @@
  * @date       		2020-3-23
  ********************************************************************************************************************/
 
-#include "headfile.h"
-#include "BrushlessMotor_ADC.h"
-#include "BrushlessMotor_HALL.h"
-#include "CCU6_PWM.h"
-#include "Balance.h"
+
 #include "isr_config.h"
 #include "isr.h"
 
 //PIT中断函数  示例
-IFX_INTERRUPT(ccu6_t12_pwm, 0, CCU60_T12_ISR_PRIORITY)
-{
-    IfxCpu_enableInterrupts();
-    IfxCcu6_clearInterruptStatusFlag(&MODULE_CCU61, IfxCcu6_InterruptSource_t12PeriodMatch);
-
-    //读取adc的值
-    adc_read();
-    //霍尔扫描
-    scan_hall_status();
-
-    if(1 > commutation_delay--)
-    {//延时时间到 开始换相
-        commutation_delay = 0;
-        motor_commutation(next_hall_value);
-    }
-
-}
-
-
-////输入捕获
-//IFX_INTERRUPT(gtm_pwm_in, 0, GTM_PWM_IN_PRIORITY)
-//{
-//
-//    IfxGtm_Tim_In_update(&driver);
-//    if(FALSE == driver.newData)
-//    {
-//        if(gpio_get(MOTOR_PWM_IN_PIN))
-//        {
-//            driver.periodTick = FPWM;                          //周期 driver.periodTick;
-//            driver.pulseLengthTick = driver.periodTick;         //高电平时间 driver.pulseLengthTick;
-//        }
-//        else
-//        {
-//            driver.periodTick = FPWM;
-//            driver.pulseLengthTick = 0;
-//        }
-//    }
-//    pwm_in_duty = (int16)(driver.pulseLengthTick * PWM_PRIOD_LOAD / driver.periodTick);
-//
-//}
-
-//PIT中断函数
 IFX_INTERRUPT(cc60_pit_ch0_isr, 0, CCU6_0_CH0_ISR_PRIORITY)
 {
-    enableInterrupts();//开启中断嵌套
-    PIT_CLEAR_FLAG(CCU6_0, PIT_CH0);
-
-    flywheel_control_Brushless();
+	enableInterrupts();//开启中断嵌套
+    IMU_quaterToEulerianAngles();
+    flywheel_control_Brush();
+	PIT_CLEAR_FLAG(CCU6_0, PIT_CH0);
 
 }
+
+
+IFX_INTERRUPT(cc60_pit_ch1_isr, 0, CCU6_0_CH1_ISR_PRIORITY)
+{
+	enableInterrupts();//开启中断嵌套
+	PIT_CLEAR_FLAG(CCU6_0, PIT_CH1);
+
+}
+
+IFX_INTERRUPT(cc61_pit_ch0_isr, 0, CCU6_1_CH0_ISR_PRIORITY)
+{
+	enableInterrupts();//开启中断嵌套
+	PIT_CLEAR_FLAG(CCU6_1, PIT_CH0);
+
+}
+
 IFX_INTERRUPT(cc61_pit_ch1_isr, 0, CCU6_1_CH1_ISR_PRIORITY)
 {
 	enableInterrupts();//开启中断嵌套
@@ -211,7 +181,20 @@ IFX_INTERRUPT(uart2_rx_isr, 0, UART2_RX_INT_PRIO)
 {
 	enableInterrupts();//开启中断嵌套
     IfxAsclin_Asc_isrReceive(&uart2_handle);
-    wireless_uart_callback();
+    switch(wireless_type)
+    {
+    	case WIRELESS_SI24R1:
+    	{
+    		wireless_uart_callback();
+    	}break;
+
+    	case WIRELESS_CH9141:
+		{
+		    bluetooth_ch9141_uart_callback();
+		}break;
+    	default:break;
+    }
+
 }
 IFX_INTERRUPT(uart2_er_isr, 0, UART2_ER_INT_PRIO)
 {

@@ -2,6 +2,7 @@
 #include "PID_Speed.h"
 #include "Camera.h"
 #include "Balance.h"
+#include "tuoluoyi.h"
 #include "headfile.h"
 
 
@@ -17,10 +18,7 @@
 float bianliang = 0;
 uint8 Bluetooth_Rdat = 0;//蓝牙串口接收的数据
 
-//引用变量
-extern float PID_Speed_P;
-extern float PID_Speed_I;
-extern float PID_Speed_D;
+
 
 
 Item_Lib const Page0_Item[] =
@@ -31,8 +29,10 @@ Item_Lib const Page0_Item[] =
         "P",&flywheel_balance_P,Float,RW,
         "I",&flywheel_balance_I,Float,RW,
         "D",&flywheel_balance_D,Float,RW,
+        "error",&error_my,Float,RW,
         "speed",&flywheel_duty,Int16_t,RW,
         "encoder",&encoder_flywheel,Int16_t,RW,
+
 
 
 
@@ -49,7 +49,10 @@ Item_Lib const Page5_Item[] =
 
         "P_speed",&flywheel_speed_P,Float,RW,
         "I_speed",&flywheel_speed_I,Float,RW,
-//        "PID_SG.KD",&PID_2KD,Float,RW,
+        "speed",&flywheel_duty,Int16_t,RW,
+        "encoder",&encoder_flywheel,Int16_t,RW,
+        "l_speed",&limit_speed,Int16_t,RW,
+
 
 
 };
@@ -57,8 +60,9 @@ Item_Lib const Page5_Item[] =
 Item_Lib const Page4_Item[] =
 {
 
-        "T_OTSU",&T_OSTU,Uint8_t,RW,
-        "SelfControl_OSTU",&SelfControl_OSTU,Uint8_t,RW,
+        "pitch",&pitch,Float,RW,
+//        "yaw",&yaw,Float,RW,
+        "roll",&roll,Float,RW,
 
 //                "ccqd",&t,Float,RW,
 //                "zz",&zz,Float,RW,
@@ -74,7 +78,9 @@ Item_Lib const Page4_Item[] =
 
 Item_Lib const Page3_Item[] =
 {
-        "bianliang",&bianliang,Float,RW,
+        "Angle",&Angle,Float,RW,
+        "error",&error_my,Float,RW,
+        "ZERO",&Angle_Zero,Float,RW,
 
 
 //        "encoder",&encoder,Float,RW,

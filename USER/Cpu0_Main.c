@@ -17,11 +17,11 @@
  * @date       		2020-3-23
  ********************************************************************************************************************/
 
-#include "All_Init.h"
+
 #include "headfile.h"
-#include "PID_Speed.h"
+#include "All_Init.h"
 #include "Camera.h"
-#include "ui.h"
+#include "tuoluoyi.h"
 #pragma section all "cpu0_dsram"
 //将本语句与#pragma section all restore语句之间的全局变量都放在CPU0的RAM中
 
@@ -38,23 +38,25 @@ int core0_main(void)
 	get_clk();//获取时钟频率  务必保留
 	//用户在此处调用各种初始化函数等
 	All_Init();
-
+    //开启定时器1
+    pit_interrupt_ms(CCU6_0, PIT_CH0, 10);
 
     //等待所有核心初始化完毕
 	IfxCpu_emitEvent(&g_cpuSyncEvent);
 	IfxCpu_waitEvent(&g_cpuSyncEvent, 0xFFFF);
 	enableInterrupts();
 
-	//注意 从V1.1.6版本之后  printf打印的信息从串口输出具体可以学习库例程6-Printf_Demo
-    //注意 从V1.1.6版本之后  printf打印的信息从串口输出具体可以学习库例程6-Printf_Demo
-    //注意 从V1.1.6版本之后  printf打印的信息从串口输出具体可以学习库例程6-Printf_Demo
-	while (1)
+	//注意 从V1.1.6版本之后  printf打印的信息从串口输出具体可以学习库例程Printf_Demo
+    //注意 从V1.1.6版本之后  printf打印的信息从串口输出具体可以学习库例程Printf_Demo
+    //注意 从V1.1.6版本之后  printf打印的信息从串口输出具体可以学习库例程Printf_Demo
+	while (TRUE)
 	{
 		//用户在此处编写任务代码
-//	    UI_Main();
-	    CameraWorking996();
-	    Lcd_Show();
-
+//	    CameraWorking996();
+//	    float a = 0;
+//	    a = Angle_Get();
+	    UI_Main();
+	    pwm_duty(ATOM0_CH1_P33_9,750);
 
 
 	}
