@@ -21,14 +21,20 @@
 
 
 #include "isr_config.h"
+#include "PID_Speed.h"
+#include "ui.h"
 #include "isr.h"
+
+int16 wheel_duty = 1500;
+int16 encoder = 0;
+int16 flag_on = 0;
 
 //PIT中断函数  示例
 IFX_INTERRUPT(cc60_pit_ch0_isr, 0, CCU6_0_CH0_ISR_PRIORITY)
 {
 	enableInterrupts();//开启中断嵌套
     IMU_quaterToEulerianAngles();
-    flywheel_control_Brush();
+    Balance_Control();
 	PIT_CLEAR_FLAG(CCU6_0, PIT_CH0);
 
 }
@@ -37,6 +43,36 @@ IFX_INTERRUPT(cc60_pit_ch0_isr, 0, CCU6_0_CH0_ISR_PRIORITY)
 IFX_INTERRUPT(cc60_pit_ch1_isr, 0, CCU6_0_CH1_ISR_PRIORITY)
 {
 	enableInterrupts();//开启中断嵌套
+    encoder= gpt12_get(GPT12_T2);
+    gpt12_clear(GPT12_T2);
+    wheel_duty = -PID_dat(encoder , 50);
+//    if(flag_on != 0)
+//    {
+//        if(0 <= wheel_duty) //电机1   正转 设置占空比为 百分之 (1000/GTM_ATOM0_PWM_DUTY_MAX*100)
+//        {
+            pwm_duty(ATOM0_CH6_P02_6,0);
+            pwm_duty(ATOM0_CH7_P02_7, 2500);
+//            pwm_duty(ATOM0_CH4_P02_4, wheel_duty);
+//            pwm_duty(ATOM0_CH5_P02_5, 0);
+//        }
+//        else                //电机1   反转
+//        {
+//            pwm_duty(ATOM0_CH6_P02_6, 0);
+//            pwm_duty(ATOM0_CH7_P02_7, -wheel_duty);
+//            pwm_duty(ATOM0_CH4_P02_4, 0);
+//            pwm_duty(ATOM0_CH5_P02_5, -wheel_duty);
+//        }
+//    }
+//    else
+//    {
+//        pwm_duty(ATOM0_CH6_P02_6, 0);
+//        pwm_duty(ATOM0_CH7_P02_7, 0);
+////        pwm_duty(ATOM0_CH4_P02_4, 0);
+////          pwm_duty(ATOM0_CH5_P02_5, 0);
+//    }
+
+
+
 	PIT_CLEAR_FLAG(CCU6_0, PIT_CH1);
 
 }

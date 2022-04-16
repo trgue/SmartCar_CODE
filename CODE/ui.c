@@ -3,6 +3,7 @@
 #include "Camera.h"
 #include "Balance.h"
 #include "tuoluoyi.h"
+#include "isr.h"
 #include "headfile.h"
 
 
@@ -46,12 +47,12 @@ Item_Lib const Page0_Item[] =
 
 Item_Lib const Page5_Item[] =
 {
-
+        "FLAG",&flag_on,Int16_t,RW,
         "P_speed",&flywheel_speed_P,Float,RW,
         "I_speed",&flywheel_speed_I,Float,RW,
         "speed",&flywheel_duty,Int16_t,RW,
         "encoder",&encoder_flywheel,Int16_t,RW,
-        "l_speed",&limit_speed,Int16_t,RW,
+        "error",&error_my,Float,RW,
 
 
 
@@ -63,6 +64,10 @@ Item_Lib const Page4_Item[] =
         "pitch",&pitch,Float,RW,
 //        "yaw",&yaw,Float,RW,
         "roll",&roll,Float,RW,
+        "P_SD",&SD_B_P,Float,RW,
+        "I_SD",&SD_B_I,Float,RW,
+        "D_SD",&SD_B_D,Float,RW,
+        "SD",&SD_duty,Int16_t,RW,
 
 //                "ccqd",&t,Float,RW,
 //                "zz",&zz,Float,RW,
@@ -94,7 +99,11 @@ Item_Lib const Page3_Item[] =
 
 Item_Lib const Page2_Item[] =
 {
-              "bianliang",&bianliang,Float,RW,
+              "SP",&PID_Speed_P,Float,RW,
+              "SI",&PID_Speed_I,Float,RW,
+              "SD",&PID_Speed_D,Float,RW,
+              "PWM",&wheel_duty,Int16_t,RW,
+              "EN",&encoder,Int16_t,RW,
 
 //        "ting",&ting_flag,Float,RW,
 //        "kaiqi",&kaiqi,Float,RW,
@@ -437,7 +446,7 @@ void UI_GetCmd(void)//从串口获取数据
 //
 //	Key_Pressed_New = Keyscan();
 
-	if (uart_query (UART_1 , &Bluetooth_Rdat) )
+	if (uart_query (UART_0 , &Bluetooth_Rdat) )
 	{
 		UI_CMD = Bluetooth_Rdat;
 		Bluetooth_Rdat = 0;

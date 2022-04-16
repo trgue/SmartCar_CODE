@@ -8,7 +8,13 @@
 #ifndef CODE_PID_SPEED_H_
 #define CODE_PID_SPEED_H_
 
-int16 PID_dat (int16 Rdat , int16 SetNum);
+#include "headfile.h"
+
+int16 PID_dat (int16 Encoder , int16 Target);
+
+extern float PID_Speed_P;
+extern float PID_Speed_I;
+extern float PID_Speed_D;
 
 
 

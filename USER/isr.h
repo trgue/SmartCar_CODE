@@ -23,7 +23,9 @@
 
 #include "headfile.h"
 
-
+extern int16 wheel_duty;
+extern int16 encoder;
+extern int16 flag_on;
 
 
 
